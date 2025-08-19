@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Productivity Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #89f7fe, #66a6ff);
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    input, select, button {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      cursor: pointer;
+      background: #66a6ff;
+      color: white;
+      border: none;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #4a90e2;
+    }
+
+    .dark-mode {
+      background: linear-gradient(135deg, #232526, #414345);
+      color: #eee;
+    }
+    .dark-mode .card {
+      background: rgba(20,20,20,0.9);
+      color: #eee;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌱 My Productivity Tracker</h1>
+
+    <!-- Input Form -->
+    <div class="card">
+      <h2>Log Today’s Work</h2>
+      <input type="text" id="task" placeholder="Task" />
+      <input type="number" id="hours" placeholder="Hours Studied" />
+      <select id="focus">
+        <option value="">Focus Level</option>
+        <option>Low</option>
+        <option>Medium</option>
+        <option>High</option>
+      </select>
+      <button onclick="addEntry()">Add Entry</button>
+    </div>
+
+    <!-- Chart -->
+    <div class="card">
+      <h2>📊 Productivity Graph</h2>
+      <canvas id="productivityChart"></canvas>
+    </div>
+
+    <!-- Summary -->
+    <div class="card">
+      <h2>📈 Progress Summary</h2>
+      <p id="summary"></p>
+    </div>
+
+    <!-- Pomodoro Timer -->
+    <div class="card">
+      <h2>⏳ Focus Timer</h2>
+      <p id="timer">25:00</p>
+      <button onclick="startTimer()">Start</button>
+      <button onclick="resetTimer()">Reset</button>
+    </div>
+
+    <!-- Motivation -->
+    <div class="card">
+      <h2>💡 Daily Motivation</h2>
+      <p id="quote"></p>
+    </div>
+
+    <button onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
+  </div>
+
+  <script>
+    let data = JSON.parse(localStorage.getItem("productivityData")) || [];
+    const ctx = document.getElementById("productivityChart").getContext("2d");
+    let chart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: data.map(d => d.task),
+        datasets: [{
+          label: "Hours Studied",
+          data: data.map(d => d.hours),
+          backgroundColor: "#66a6ff"
+        }]
+      }
+    });
+
+    function addEntry() {
+      const task = document.getElementById("task").value;
+      const hours = parseFloat(document.getElementById("hours").value);
+      const focus = document.getElementById("focus").value;
+
+      if (!task || !hours || !focus) return alert("Please fill all fields");
+
+      data.push({ task, hours, focus });
+      localStorage.setItem("productivityData", JSON.stringify(data));
+      updateChart();
+      updateSummary();
+    }
+
+    function updateChart() {
+      chart.data.labels = data.map(d => d.task);
+      chart.data.datasets[0].data = data.map(d => d.hours);
+      chart.update();
+    }
+
+    function updateSummary() {
+      let total = data.reduce((sum, d) => sum + d.hours, 0);
+      let avg = (total / data.length).toFixed(1);
+      document.getElementById("summary").innerText = `Total Hours: ${total}, Average per Task: ${avg}`;
+    }
+    updateSummary();
+
+    // Pomodoro Timer
+    let timer;
+    let timeLeft = 25 * 60;
+    function startTimer() {
+      clearInterval(timer);
+      timer = setInterval(() => {
+        if (timeLeft <= 0) { clearInterval(timer); alert("Break Time!"); return; }
+        timeLeft--;
+        let minutes = Math.floor(timeLeft / 60);
+        let seconds = timeLeft % 60;
+        document.getElementById("timer").innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+    function resetTimer() {
+      clearInterval(timer);
+      timeLeft = 25 * 60;
+      document.getElementById("timer").innerText = "25:00";
+    }
+
+    // Motivation Quotes
+    const quotes = [
+      "Small steps every day lead to big results.",
+      "Discipline beats motivation.",
+      "You only regret the work you didn’t do.",
+      "Focus on progress, not perfection."
+    ];
+    document.getElementById("quote").innerText = quotes[Math.floor(Math.random() * quotes.length)];
+
+    // Dark Mode
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+  </script>
+</body>
+</html>
