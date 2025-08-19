@@ -2,187 +2,909 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Productivity Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Productivity Dashboard</title>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: linear-gradient(135deg, #89f7fe, #66a6ff);
-      color: #333;
+    :root{
+      --bg-grad-start:#e6f0ff;     /* light blue */
+      --bg-grad-end:#ede7ff;       /* light purple */
+      --card-bg:#ffffff;
+      --text:#1a202c;
+      --muted:#4a5568;
+      --teal:#38b2ac;
+      --orange:#f6ad55;
+      --shadow:0 10px 24px rgba(0,0,0,.08);
+      --radius:20px;
+      --line:#e2e8f0;
+      --good:#38b2ac;
+      --warn:#f6ad55;
     }
-
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
+    body.dark{
+      --bg-grad-start:#0f172a;
+      --bg-grad-end:#1a202c;       /* deep navy */
+      --card-bg:#111827;
+      --text:#f7fafc;
+      --muted:#cbd5e0;
+      --line:#243041;
+      --shadow:0 14px 28px rgba(0,0,0,.45);
     }
-
-    .card {
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      padding: 20px;
-      margin-bottom: 20px;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter, Poppins, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:linear-gradient(135deg,var(--bg-grad-start),var(--bg-grad-end)) fixed;
     }
-
-    h1, h2 {
-      text-align: center;
-      margin-bottom: 15px;
+    .container{
+      max-width:1200px;
+      padding:24px;
+      margin-inline:auto;
     }
-
-    input, select, button {
-      padding: 10px;
-      margin: 5px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
+    .header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:18px;
     }
-
-    button {
-      cursor: pointer;
-      background: #66a6ff;
-      color: white;
-      border: none;
-      transition: 0.3s;
+    .title{
+      font-weight:800;
+      letter-spacing:.2px;
+      font-size:clamp(26px,3.3vw,36px);
+      margin:0 0 6px 0;
     }
-
-    button:hover {
-      background: #4a90e2;
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
     }
-
-    .dark-mode {
-      background: linear-gradient(135deg, #232526, #414345);
-      color: #eee;
+    .quote{
+      font-style:italic;
+      color:var(--muted);
+      margin-top:6px;
+      font-size:14px;
     }
-    .dark-mode .card {
-      background: rgba(20,20,20,0.9);
-      color: #eee;
+    .actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
     }
+    .toggle{
+      display:inline-flex; align-items:center; gap:10px;
+      background:var(--card-bg);
+      border-radius:999px; padding:8px 12px; box-shadow:var(--shadow);
+    }
+    .switch{
+      position:relative; width:44px; height:24px; background:#cbd5e1; border-radius:999px; cursor:pointer; transition:.25s;
+    }
+    .switch::after{
+      content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%;
+      background:#fff; transition:.25s;
+      box-shadow:0 1px 2px rgba(0,0,0,.2);
+    }
+    body.dark .switch{background:#334155}
+    body.dark .switch::after{transform:translateX(20px)}
+    .btn{
+      appearance:none; border:0; border-radius:999px; padding:10px 16px; font-weight:600;
+      background:var(--teal); color:white; cursor:pointer; transition:transform .05s ease, filter .2s ease, box-shadow .2s ease;
+      box-shadow:0 8px 16px rgba(56,178,172,.25);
+    }
+    .btn:hover{filter:brightness(1.05)}
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{background:var(--orange); box-shadow:0 8px 16px rgba(246,173,85,.25)}
+    .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--line); box-shadow:none}
+    .banner{
+      background:linear-gradient(90deg,rgba(56,178,172,.15),rgba(246,173,85,.15));
+      border:1px dashed rgba(0,0,0,.08);
+      color:var(--text);
+      padding:12px 14px; border-radius:14px; display:flex; justify-content:space-between; align-items:center; gap:12px; margin:14px 0 22px;
+      backdrop-filter:saturate(120%) blur(2px);
+    }
+    .grid{
+      display:grid; gap:18px;
+      grid-template-columns:repeat(12,1fr);
+    }
+    .card{
+      background:var(--card-bg); border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:18px;
+      animation:fadeIn .35s ease both;
+    }
+    @keyframes fadeIn{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+    .card h3{margin:0 0 10px 0; font-size:18px}
+    .muted{color:var(--muted); font-size:13px}
+    .divider{height:1px; background:var(--line); margin:10px 0 16px}
+    .row{display:flex; gap:12px; flex-wrap:wrap}
+    .field{flex:1 1 180px; min-width:160px}
+    .field label{display:block; font-size:12px; letter-spacing:.3px; text-transform:uppercase; color:var(--muted); margin-bottom:8px}
+    input[type="text"], input[type="number"], textarea, select{
+      width:100%; padding:12px 12px; border-radius:12px; border:1px solid var(--line);
+      background:transparent; color:var(--text); outline:none; transition:border-color .2s, box-shadow .2s;
+    }
+    textarea{min-height:76px; resize:vertical}
+    input[type="text"]:focus, input[type="number"]:focus, textarea:focus{border-color:var(--teal); box-shadow:0 0 0 3px rgba(56,178,172,.15)}
+    .slider-wrap{display:flex; align-items:center; gap:10px}
+    input[type="range"]{width:100%}
+    .emoji-badge{
+      min-width:42px; text-align:center; padding:8px 10px; border-radius:10px; background:rgba(56,178,172,.12); border:1px solid rgba(56,178,172,.25)
+    }
+    /* Timer */
+    .timer{
+      display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px;
+    }
+    .circle{
+      width:200px; height:200px; position:relative;
+    }
+    .circle svg{transform:rotate(-90deg)}
+    .circle .time{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      font-size:28px; font-weight:700;
+    }
+    .legend{font-size:12px; color:var(--muted)}
+    /* Charts layout */
+    .charts{
+      display:grid; grid-template-columns:1fr 1fr; gap:16px;
+    }
+    /* Progress bars */
+    .progress{
+      width:100%; height:12px; border-radius:999px; background:linear-gradient(90deg,#edf2f7,var(--line));
+      overflow:hidden; position:relative;
+    }
+    .progress > span{
+      display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--teal), var(--orange));
+      transition:width .6s ease;
+    }
+    .stat{
+      display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center;
+      padding:10px 12px; border:1px solid var(--line); border-radius:12px;
+    }
+    .streak{
+      font-weight:700; color:#ef4444; /* 🔥 */
+    }
+    /* Responsive */
+    @media (max-width: 980px){
+      .charts{grid-template-columns:1fr}
+      .header{flex-direction:column}
+    }
+    /* Small helpers */
+    .pill{
+      display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:6px 10px; border-radius:999px;
+      background:rgba(246,173,85,.15); border:1px solid rgba(246,173,85,.3)
+    }
+    .list{
+      display:grid; gap:10px; max-height:220px; overflow:auto; padding-right:4px;
+    }
+    .list .item{
+      border:1px solid var(--line); border-radius:12px; padding:10px 12px; transition:background .2s, transform .05s;
+    }
+    .list .item:hover{background:rgba(56,178,172,.07)}
+    .right{margin-left:auto}
+    /* Confetti canvas */
+    #confetti{position:fixed; inset:0; pointer-events:none}
   </style>
 </head>
 <body>
+  <canvas id="confetti"></canvas>
   <div class="container">
-    <h1>🌱 My Productivity Tracker</h1>
+    <header class="header">
+      <div>
+        <h1 class="title">My Productivity Dashboard</h1>
+        <p class="sub" id="today"></p>
+        <p class="quote" id="daily-quote"></p>
+      </div>
+      <div class="actions">
+        <div class="toggle">
+          <span class="muted" id="mode-label">Light</span>
+          <div id="theme-switch" class="switch" role="switch" aria-checked="false" tabindex="0" title="Toggle dark mode"></div>
+        </div>
+        <button class="btn ghost" id="exportCsvBtn">Export CSV</button>
+        <button class="btn ghost" id="clearDataBtn">Clear Data</button>
+      </div>
+    </header>
 
-    <!-- Input Form -->
-    <div class="card">
-      <h2>Log Today’s Work</h2>
-      <input type="text" id="task" placeholder="Task" />
-      <input type="number" id="hours" placeholder="Hours Studied" />
-      <select id="focus">
-        <option value="">Focus Level</option>
-        <option>Low</option>
-        <option>Medium</option>
-        <option>High</option>
-      </select>
-      <button onclick="addEntry()">Add Entry</button>
+    <div id="reminder" class="banner" hidden>
+      <div>🔔 <strong>Daily reminder:</strong> Have you logged today’s work?</div>
+      <button class="btn secondary" id="logNowBtn">Log now</button>
     </div>
 
-    <!-- Chart -->
-    <div class="card">
-      <h2>📊 Productivity Graph</h2>
-      <canvas id="productivityChart"></canvas>
-    </div>
+    <!-- Input / Timer -->
+    <section class="grid" style="margin-bottom:4px">
+      <div class="card" style="grid-column:span 7">
+        <h3>Log Today’s Work</h3>
+        <div class="divider"></div>
+        <div class="row">
+          <div class="field">
+            <label for="taskName">Task name</label>
+            <input id="taskName" type="text" placeholder="e.g., Deep work on chapter 3" />
+          </div>
+          <div class="field">
+            <label for="hours">Hours studied</label>
+            <input id="hours" type="number" min="0" step="0.25" placeholder="0.00" />
+          </div>
+          <div class="field">
+            <label for="focus">Focus level <span class="muted">(1–10)</span></label>
+            <div class="slider-wrap">
+              <input id="focus" type="range" min="1" max="10" step="1" value="7" />
+              <div id="focusEmoji" class="emoji-badge">🔥 7</div>
+            </div>
+          </div>
+          <div class="field" style="flex:1 1 100%">
+            <label for="notes">Notes (reflections or distractions)</label>
+            <textarea id="notes" placeholder="What helped? What got in the way?"></textarea>
+          </div>
+        </div>
+        <div class="row" style="align-items:center; justify-content:space-between">
+          <label class="pill"><input id="completed" type="checkbox" style="transform:translateY(1px)"/> Mark task as completed</label>
+          <div class="right">
+            <button class="btn" id="saveEntryBtn">Save Entry</button>
+          </div>
+        </div>
+      </div>
 
-    <!-- Summary -->
-    <div class="card">
-      <h2>📈 Progress Summary</h2>
-      <p id="summary"></p>
-    </div>
+      <div class="card" style="grid-column:span 5">
+        <h3>Focus Timer</h3>
+        <div class="divider"></div>
+        <div class="timer">
+          <div class="circle">
+            <svg width="200" height="200">
+              <circle cx="100" cy="100" r="90" stroke="rgba(0,0,0,.08)" stroke-width="12" fill="none"></circle>
+              <circle id="progressCircle" cx="100" cy="100" r="90" stroke="var(--teal)" stroke-width="12" stroke-linecap="round" fill="none" stroke-dasharray="565.48" stroke-dashoffset="565.48"></circle>
+            </svg>
+            <div class="time" id="timerDisplay">25:00</div>
+          </div>
+          <div class="legend" id="timerLegend">Pomodoro: 25 minutes</div>
+          <div class="row" style="justify-content:center">
+            <button class="btn" id="startTimerBtn">Start 25 min Focus Session</button>
+            <button class="btn ghost" id="pauseTimerBtn" disabled>Pause</button>
+            <button class="btn ghost" id="resetTimerBtn" disabled>Reset</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <!-- Pomodoro Timer -->
-    <div class="card">
-      <h2>⏳ Focus Timer</h2>
-      <p id="timer">25:00</p>
-      <button onclick="startTimer()">Start</button>
-      <button onclick="resetTimer()">Reset</button>
-    </div>
+    <!-- Charts -->
+    <section class="card" style="margin-top:6px">
+      <h3>Weekly Focus & Hours</h3>
+      <p class="muted" style="margin-top:4px">Auto-updates when you log new entries.</p>
+      <div class="divider"></div>
+      <div class="charts">
+        <div>
+          <canvas id="hoursChart" height="140"></canvas>
+        </div>
+        <div>
+          <canvas id="focusChart" height="140"></canvas>
+        </div>
+      </div>
+    </section>
 
-    <!-- Motivation -->
-    <div class="card">
-      <h2>💡 Daily Motivation</h2>
-      <p id="quote"></p>
-    </div>
+    <!-- Progress Summary -->
+    <section class="grid" style="margin-top:6px">
+      <div class="card" style="grid-column:span 6">
+        <h3>Progress Summary (This Week)</h3>
+        <div class="divider"></div>
+        <div class="row">
+          <div class="stat" style="flex:1 1 32%">
+            <div>⏱️</div>
+            <div>
+              <div class="muted">Total Study Hours</div>
+              <div id="sumHours" style="font-weight:700; font-size:20px">0</div>
+            </div>
+          </div>
+          <div class="stat" style="flex:1 1 32%">
+            <div>🎯</div>
+            <div>
+              <div class="muted">Average Focus</div>
+              <div id="avgFocus" style="font-weight:700; font-size:20px">0</div>
+            </div>
+          </div>
+          <div class="stat" style="flex:1 1 32%">
+            <div>✅</div>
+            <div>
+              <div class="muted">Completed Tasks</div>
+              <div id="doneTasks" style="font-weight:700; font-size:20px">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="row" style="align-items:center">
+          <div class="streak" id="streak">🔥 Day Streak: 0</div>
+          <div class="muted"> (days in a row with &gt; 2 hours)</div>
+        </div>
+      </div>
 
-    <button onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
+      <div class="card" style="grid-column:span 6">
+        <h3>Goals</h3>
+        <div class="divider"></div>
+        <div class="row">
+          <div class="field">
+            <label for="weeklyHoursTarget">Weekly target hours</label>
+            <input id="weeklyHoursTarget" type="number" min="0" step="0.5" placeholder="e.g., 12" />
+          </div>
+          <div class="field">
+            <label for="weeklyTasksTarget">Weekly tasks to finish</label>
+            <input id="weeklyTasksTarget" type="number" min="0" step="1" placeholder="e.g., 7" />
+          </div>
+          <div class="field" style="align-self:flex-end">
+            <button class="btn secondary" id="saveGoalsBtn">Save Goals</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div style="display:grid; gap:12px">
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px">
+              <span>Hours Progress</span>
+              <span id="hoursProgressLabel">0%</span>
+            </div>
+            <div class="progress"><span id="hoursProgressBar"></span></div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px">
+              <span>Tasks Progress</span>
+              <span id="tasksProgressLabel">0%</span>
+            </div>
+            <div class="progress"><span id="tasksProgressBar"></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reflections -->
+    <section class="grid" style="margin-top:6px">
+      <div class="card" style="grid-column:span 7">
+        <h3>Daily Reflection</h3>
+        <div class="divider"></div>
+        <div class="row">
+          <div class="field">
+            <label for="win">Biggest win today</label>
+            <input id="win" type="text" placeholder="What are you proud of today?" />
+          </div>
+          <div class="field">
+            <label for="obstacle">Biggest obstacle today</label>
+            <input id="obstacle" type="text" placeholder="What got in the way?" />
+          </div>
+          <div class="field" style="align-self:flex-end">
+            <button class="btn" id="saveReflectionBtn">Save Reflection</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column:span 5">
+        <h3>Previous Reflections</h3>
+        <p class="muted" style="margin-top:0">Click to load into today’s fields.</p>
+        <div class="divider"></div>
+        <div id="reflectionsList" class="list"></div>
+      </div>
+    </section>
+
+    <footer style="text-align:center; margin:22px 0; color:var(--muted); font-size:12px">
+      Built for calm productivity. Data stays in your browser (localStorage).
+    </footer>
   </div>
 
   <script>
-    let data = JSON.parse(localStorage.getItem("productivityData")) || [];
-    const ctx = document.getElementById("productivityChart").getContext("2d");
-    let chart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: data.map(d => d.task),
-        datasets: [{
-          label: "Hours Studied",
-          data: data.map(d => d.hours),
-          backgroundColor: "#66a6ff"
-        }]
+    /***** Utilities *****/
+    const $ = sel => document.querySelector(sel);
+    const todayStr = () => {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    };
+    const fmtPrettyDate = (s) => {
+      const d = new Date(s+'T00:00:00');
+      return d.toLocaleDateString(undefined,{weekday:'long', year:'numeric', month:'long', day:'numeric'});
+    };
+    const startOfWeek = (dateStr) => {
+      // Monday as start of week
+      const d = new Date(dateStr+'T00:00:00');
+      const day = (d.getDay()+6)%7; // Mon=0..Sun=6
+      d.setDate(d.getDate() - day);
+      return d;
+    };
+    const weekDates = (dateStr) => {
+      const start = startOfWeek(dateStr);
+      return [...Array(7)].map((_,i)=> {
+        const d=new Date(start);
+        d.setDate(start.getDate()+i);
+        return d.toISOString().slice(0,10);
+      });
+    };
+    const getStore = (key, fallback) => {
+      try{
+        const v = localStorage.getItem(key);
+        return v ? JSON.parse(v) : fallback;
+      }catch(e){ return fallback; }
+    };
+    const setStore = (key, val) => localStorage.setItem(key, JSON.stringify(val));
+    const clamp = (n,min,max)=>Math.max(min,Math.min(max,n));
+    const sum = arr => arr.reduce((a,b)=>a+b,0);
+
+    /***** Quotes (daily rotation) *****/
+    const quotes = [
+      "Small wins stack into momentum.",
+      "Focus beats intensity when it’s consistent.",
+      "You don’t need more time—you need more intention.",
+      "Process over motivation; systems over willpower.",
+      "Clarity first, then effort.",
+      "Make it easy to start; the rest follows.",
+      "Do the useful thing. The rest is noise.",
+      "Leave room for future you to win.",
+      "You’re one focused hour away from progress.",
+      "Less friction, more traction."
+    ];
+    function pickDailyQuote(){
+      const base = Math.floor(new Date().getTime()/86400000); // days since epoch
+      return quotes[base % quotes.length];
+    }
+
+    /***** Theme *****/
+    function applyTheme(){
+      const theme = getStore('pd_theme','light');
+      if(theme==='dark'){
+        document.body.classList.add('dark');
+        $('#theme-switch').setAttribute('aria-checked','true');
+        $('#mode-label').textContent='Dark';
+      }else{
+        document.body.classList.remove('dark');
+        $('#theme-switch').setAttribute('aria-checked','false');
+        $('#mode-label').textContent='Light';
+      }
+      // Recolor charts to theme variables
+      setTimeout(updateCharts, 0);
+    }
+
+    /***** Data *****/
+    // entries: [{id, date, task, hours, focus, notes, completed}]
+    // reflections: { [date]: {win, obstacle} }
+    // goals: { weeklyHoursTarget, weeklyTasksTarget }
+    let entries = getStore('pd_entries',[]);
+    let reflections = getStore('pd_reflections',{});
+    let goals = getStore('pd_goals',{weeklyHoursTarget:0, weeklyTasksTarget:0});
+    let celebratedDaily = getStore('pd_dailyCelebrations',{}); // { 'YYYY-MM-DD': true }
+    let celebratedWeekly = getStore('pd_weekCelebrations',{}); // { 'YYYY-MM-DD(startOfWeek)': true }
+
+    /***** Focus slider emoji *****/
+    function emojiFor(val){
+      val = Number(val);
+      if(val<=2) return '😴';
+      if(val<=4) return '🙂';
+      if(val<=6) return '⚡';
+      if(val<=8) return '🔥';
+      return '💪';
+    }
+    function updateFocusBadge(){
+      const v = $('#focus').value;
+      $('#focusEmoji').textContent = `${emojiFor(v)} ${v}`;
+    }
+
+    /***** Reminder banner *****/
+    function updateReminder(){
+      const hasToday = entries.some(e=>e.date===todayStr());
+      $('#reminder').hidden = hasToday;
+    }
+
+    /***** Charts *****/
+    let hoursChart, focusChart;
+    function themeColor(varName){
+      return getComputedStyle(document.body).getPropertyValue(varName).trim() || '#38b2ac';
+    }
+    function aggregateWeek(){
+      const week = weekDates(todayStr());
+      const hoursPerDay = week.map(d => sum(entries.filter(e=>e.date===d).map(e=>Number(e.hours)||0)));
+      const focusPerDay = week.map(d => {
+        const es = entries.filter(e=>e.date===d);
+        if(es.length===0) return 0;
+        return Math.round(sum(es.map(e=>Number(e.focus)||0))/es.length * 10)/10;
+      });
+      const labels = week.map(d => new Date(d+'T00:00:00').toLocaleDateString(undefined,{weekday:'short'}));
+      return {labels, hoursPerDay, focusPerDay, weekDates:week};
+    }
+    function buildCharts(){
+      const {labels, hoursPerDay, focusPerDay} = aggregateWeek();
+      const teal = themeColor('--teal');
+      const orange = themeColor('--orange');
+      const text = themeColor('--text');
+      const grid = themeColor('--line');
+
+      const common = {
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          x:{ grid:{color:grid}, ticks:{color:text}},
+          y:{ grid:{color:grid}, ticks:{color:text}, beginAtZero:true}
+        },
+        plugins:{
+          legend:{labels:{color:text}}
+        }
+      };
+
+      const hctx = $('#hoursChart').getContext('2d');
+      hoursChart = new Chart(hctx,{
+        type:'line',
+        data:{
+          labels,
+          datasets:[{
+            label:'Hours studied',
+            data:hoursPerDay,
+            borderColor:teal,
+            backgroundColor:teal+'33',
+            tension:.35,
+            fill:true,
+            pointRadius:4
+          }]
+        },
+        options:common
+      });
+
+      const fctx = $('#focusChart').getContext('2d');
+      focusChart = new Chart(fctx,{
+        type:'bar',
+        data:{
+          labels,
+          datasets:[{
+            label:'Average focus',
+            data:focusPerDay,
+            backgroundColor:orange+'aa',
+            borderColor:orange
+          }]
+        },
+        options:{
+          ...common,
+          scales:{
+            x:{ grid:{color:grid}, ticks:{color:text}},
+            y:{ grid:{color:grid}, ticks:{color:text}, beginAtZero:true, suggestedMax:10}
+          }
+        }
+      });
+    }
+    function updateCharts(){
+      if(!hoursChart || !focusChart) return buildCharts();
+      const {labels, hoursPerDay, focusPerDay} = aggregateWeek();
+      hoursChart.data.labels = labels;
+      hoursChart.data.datasets[0].data = hoursPerDay;
+      hoursChart.update();
+
+      focusChart.data.labels = labels;
+      focusChart.data.datasets[0].data = focusPerDay;
+      focusChart.update();
+    }
+
+    /***** Summary, Goals, Streak *****/
+    function calcWeekly(){
+      const week = weekDates(todayStr());
+      const inWeek = entries.filter(e=>week.includes(e.date));
+      const totalHours = Math.round(sum(inWeek.map(e=>Number(e.hours)||0)) * 100)/100;
+      const avgFocus = inWeek.length ? Math.round((sum(inWeek.map(e=>Number(e.focus)||0))/inWeek.length)*10)/10 : 0;
+      const completed = inWeek.filter(e=>e.completed).length;
+      return {totalHours, avgFocus, completed, week};
+    }
+    function calcStreak(){
+      // Count consecutive days ending today with total hours > 2
+      const threshold = 2;
+      let streak = 0;
+      for(let i=0;i<365;i++){
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().slice(0,10);
+        const dayHours = sum(entries.filter(e=>e.date===key).map(e=>Number(e.hours)||0));
+        if(dayHours>threshold) streak++;
+        else break;
+      }
+      return streak;
+    }
+    function renderSummary(){
+      const {totalHours, avgFocus, completed, week} = calcWeekly();
+      $('#sumHours').textContent = totalHours.toFixed(2);
+      $('#avgFocus').textContent = avgFocus.toFixed(1);
+      $('#doneTasks').textContent = completed;
+      $('#streak').textContent = `🔥 Day Streak: ${calcStreak()}`;
+
+      // Goals progress bars
+      const hoursTarget = Number(goals.weeklyHoursTarget)||0;
+      const tasksTarget = Number(goals.weeklyTasksTarget)||0;
+
+      const hoursPct = hoursTarget>0 ? clamp((totalHours/hoursTarget)*100,0,100) : 0;
+      const tasksThisWeek = entries.filter(e=>week.includes(e.date) && e.completed).length;
+      const tasksPct = tasksTarget>0 ? clamp((tasksThisWeek/tasksTarget)*100,0,100) : 0;
+
+      $('#hoursProgressBar').style.width = `${hoursPct}%`;
+      $('#hoursProgressLabel').textContent = `${Math.round(hoursPct)}%`;
+      $('#tasksProgressBar').style.width = `${tasksPct}%`;
+      $('#tasksProgressLabel').textContent = `${Math.round(tasksPct)}%`;
+
+      // Confetti on reaching goals
+      const wkKey = startOfWeek(todayStr()).toISOString().slice(0,10);
+      if(hoursTarget>0 && totalHours>=hoursTarget && !celebratedWeekly[wkKey]){
+        celebratedWeekly[wkKey]=true; setStore('pd_weekCelebrations',celebratedWeekly);
+        confettiBurst();
+      }
+      if(tasksTarget>0 && tasksThisWeek>=tasksTarget && !celebratedWeekly[wkKey+'_tasks']){
+        celebratedWeekly[wkKey+'_tasks']=true; setStore('pd_weekCelebrations',celebratedWeekly);
+        confettiBurst();
+      }
+    }
+
+    /***** Reflections *****/
+    function renderReflectionsList(){
+      const items = Object.keys(reflections).sort((a,b)=>b.localeCompare(a));
+      const box = $('#reflectionsList');
+      box.innerHTML = items.map(date=>{
+        const {win, obstacle} = reflections[date]||{};
+        return `<div class="item" data-date="${date}">
+          <div style="font-weight:600">${fmtPrettyDate(date)}</div>
+          <div class="muted" style="margin-top:4px">${win ? '🏆 ' + escapeHtml(win) : '<em class="muted">No win recorded</em>'}</div>
+          <div class="muted" style="margin-top:2px">${obstacle ? '🧱 ' + escapeHtml(obstacle) : ''}</div>
+        </div>`;
+      }).join('') || `<div class="muted">No previous reflections yet.</div>`;
+      box.querySelectorAll('.item').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          const d = el.getAttribute('data-date');
+          const r = reflections[d];
+          if(r){ $('#win').value = r.win||''; $('#obstacle').value = r.obstacle||''; }
+          window.scrollTo({top:0, behavior:'smooth'});
+        });
+      });
+    }
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) }
+
+    /***** CSV Export *****/
+    function exportCSV(){
+      const header = ['type','date','task','hours','focus','notes','completed','win','obstacle'];
+      const rows = [];
+      entries.forEach(e=>{
+        rows.push(['entry', e.date, e.task||'', e.hours||'', e.focus||'', (e.notes||'').replace(/\n/g,' '), e.completed?'yes':'no', '', '']);
+      });
+      Object.entries(reflections).forEach(([d, r])=>{
+        rows.push(['reflection', d, '', '', '', '', '', r.win||'', r.obstacle||'']);
+      });
+      const csv = [header.join(','), ...rows.map(r => r.map(field => `"${String(field).replace(/"/g,'""')}"`).join(','))].join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `productivity_data_${todayStr()}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    /***** Confetti (lightweight) *****/
+    const confettiCanvas = $('#confetti');
+    const ctx = confettiCanvas.getContext('2d');
+    let confettiParticles = [];
+    function resizeCanvas(){
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+    function confettiBurst(){
+      const colors = [themeColor('--teal'), themeColor('--orange'), '#60a5fa', '#f472b6'];
+      for(let i=0;i<140;i++){
+        confettiParticles.push({
+          x: Math.random()*confettiCanvas.width,
+          y: -10,
+          r: Math.random()*6+2,
+          c: colors[Math.floor(Math.random()*colors.length)],
+          vx: (Math.random()-0.5)*4,
+          vy: Math.random()*3+2,
+          a: Math.random()*0.8+0.5,
+          spin: Math.random()*0.2
+        });
+      }
+      if(!confettiAnimating) animateConfetti();
+    }
+    let confettiAnimating = false;
+    function animateConfetti(){
+      confettiAnimating = true;
+      ctx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
+      confettiParticles.forEach(p=>{
+        p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.a *= 0.996;
+        ctx.globalAlpha = p.a;
+        ctx.fillStyle = p.c;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      confettiParticles = confettiParticles.filter(p=>p.y<confettiCanvas.height+20 && p.a>0.05);
+      if(confettiParticles.length>0) requestAnimationFrame(animateConfetti);
+      else confettiAnimating = false;
+    }
+
+    /***** Pomodoro Timer *****/
+    const FULL = 2*Math.PI*90; // circumference ~565.48; we’ll compute directly from SVG attr
+    let timerInterval = null;
+    let remaining = 25*60; // seconds
+    let total = 25*60;
+    function updateCircle(){
+      const circle = $('#progressCircle');
+      const r = 90;
+      const C = 2*Math.PI*r;
+      const progress = 1 - (remaining/total);
+      circle.setAttribute('stroke-dasharray', C.toFixed(2));
+      circle.setAttribute('stroke-dashoffset', (C*(1-progress)).toFixed(2));
+    }
+    function renderTime(){
+      const m = String(Math.floor(remaining/60)).padStart(2,'0');
+      const s = String(remaining%60).padStart(2,'0');
+      $('#timerDisplay').textContent = `${m}:${s}`;
+      updateCircle();
+    }
+    function startTimer(){
+      if(timerInterval) return;
+      $('#startTimerBtn').disabled = true;
+      $('#pauseTimerBtn').disabled = false;
+      $('#resetTimerBtn').disabled = false;
+      $('#timerLegend').textContent = 'Focusing...';
+      timerInterval = setInterval(()=>{
+        remaining--;
+        if(remaining<=0){
+          clearInterval(timerInterval); timerInterval=null;
+          $('#timerLegend').textContent = 'Session complete!';
+          $('#pauseTimerBtn').disabled = true;
+          // Celebrate focus completion lightly
+          confettiBurst();
+          setTimeout(()=> alert('Nice work! Take a 5-minute break.'), 50);
+        }
+        renderTime();
+      },1000);
+    }
+    function pauseTimer(){
+      if(!timerInterval) return;
+      clearInterval(timerInterval); timerInterval=null;
+      $('#startTimerBtn').disabled = false;
+      $('#timerLegend').textContent = 'Paused';
+    }
+    function resetTimer(){
+      clearInterval(timerInterval); timerInterval=null;
+      remaining = total = 25*60;
+      $('#timerLegend').textContent = 'Pomodoro: 25 minutes';
+      $('#startTimerBtn').disabled = false;
+      $('#pauseTimerBtn').disabled = true;
+      $('#resetTimerBtn').disabled = true;
+      renderTime();
+    }
+
+    /***** Event Handlers *****/
+    // Save Entry
+    $('#saveEntryBtn').addEventListener('click', ()=>{
+      const task = $('#taskName').value.trim();
+      const hours = Number($('#hours').value);
+      const focus = Number($('#focus').value);
+      const notes = $('#notes').value.trim();
+      const completed = $('#completed').checked;
+
+      if(!task && !hours){ alert('Add at least a task name or hours.'); return; }
+      if(hours<0){ alert('Hours cannot be negative.'); return; }
+
+      const entry = {
+        id: cryptoRandomId(),
+        date: todayStr(),
+        task, hours: isNaN(hours)?0:hours, focus: isNaN(focus)?0:focus, notes, completed
+      };
+      entries.push(entry);
+      setStore('pd_entries', entries);
+
+      // Clear fields lightly
+      $('#taskName').value=''; $('#hours').value=''; $('#notes').value=''; $('#completed').checked=false;
+
+      updateReminder();
+      updateCharts();
+      renderSummary();
+
+      // Daily celebration when crossing 2h threshold
+      const t = todayStr();
+      const todayHours = sum(entries.filter(e=>e.date===t).map(e=>Number(e.hours)||0));
+      if(todayHours>=2 && !celebratedDaily[t]){
+        celebratedDaily[t]=true; setStore('pd_dailyCelebrations',celebratedDaily);
+        confettiBurst();
       }
     });
 
-    function addEntry() {
-      const task = document.getElementById("task").value;
-      const hours = parseFloat(document.getElementById("hours").value);
-      const focus = document.getElementById("focus").value;
-
-      if (!task || !hours || !focus) return alert("Please fill all fields");
-
-      data.push({ task, hours, focus });
-      localStorage.setItem("productivityData", JSON.stringify(data));
-      updateChart();
-      updateSummary();
+    function cryptoRandomId(){
+      if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return 'id-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
     }
 
-    function updateChart() {
-      chart.data.labels = data.map(d => d.task);
-      chart.data.datasets[0].data = data.map(d => d.hours);
-      chart.update();
+    // Save Goals
+    $('#saveGoalsBtn').addEventListener('click', ()=>{
+      goals.weeklyHoursTarget = Number($('#weeklyHoursTarget').value)||0;
+      goals.weeklyTasksTarget = Number($('#weeklyTasksTarget').value)||0;
+      setStore('pd_goals', goals);
+      renderSummary();
+    });
+
+    // Save Reflection
+    $('#saveReflectionBtn').addEventListener('click', ()=>{
+      const win = $('#win').value.trim();
+      const obstacle = $('#obstacle').value.trim();
+      if(!win && !obstacle){ alert('Add at least one reflection.'); return; }
+      reflections[todayStr()] = {win, obstacle};
+      setStore('pd_reflections', reflections);
+      renderReflectionsList();
+    });
+
+    // Focus slider
+    $('#focus').addEventListener('input', updateFocusBadge);
+
+    // Reminder quick scroll
+    $('#logNowBtn').addEventListener('click', ()=>{
+      window.scrollTo({top:0, behavior:'smooth'});
+      $('#taskName').focus();
+    });
+
+    // Theme toggle
+    $('#theme-switch').addEventListener('click', ()=>{
+      const current = getStore('pd_theme','light');
+      setStore('pd_theme', current==='light'?'dark':'light');
+      applyTheme();
+    });
+    $('#theme-switch').addEventListener('keydown', (e)=>{
+      if(e.key===' '||e.key==='Enter'){ e.preventDefault(); $('#theme-switch').click(); }
+    });
+
+    // Export / Clear
+    $('#exportCsvBtn').addEventListener('click', exportCSV);
+    $('#clearDataBtn').addEventListener('click', ()=>{
+      if(confirm('Clear ALL local data (entries, reflections, goals)? This cannot be undone.')){
+        localStorage.removeItem('pd_entries');
+        localStorage.removeItem('pd_reflections');
+        localStorage.removeItem('pd_goals');
+        localStorage.removeItem('pd_dailyCelebrations');
+        localStorage.removeItem('pd_weekCelebrations');
+        entries=[]; reflections={}; goals={weeklyHoursTarget:0, weeklyTasksTarget:0}; celebratedDaily={}; celebratedWeekly={};
+        updateCharts(); renderSummary(); renderReflectionsList(); updateReminder();
+        $('#weeklyHoursTarget').value=''; $('#weeklyTasksTarget').value='';
+        confettiBurst();
+      }
+    });
+
+    // Timer buttons
+    $('#startTimerBtn').addEventListener('click', startTimer);
+    $('#pauseTimerBtn').addEventListener('click', pauseTimer);
+    $('#resetTimerBtn').addEventListener('click', resetTimer);
+
+    /***** Init *****/
+    function init(){
+      // Header
+      $('#today').textContent = new Date().toLocaleDateString(undefined,{weekday:'long', year:'numeric', month:'long', day:'numeric'});
+      $('#daily-quote').textContent = '“' + pickDailyQuote() + '”';
+
+      // Theme
+      applyTheme();
+
+      // Focus badge
+      updateFocusBadge();
+
+      // Populate goals fields
+      $('#weeklyHoursTarget').value = goals.weeklyHoursTarget||'';
+      $('#weeklyTasksTarget').value = goals.weeklyTasksTarget||'';
+
+      // Charts & summary
+      buildCharts();
+      renderSummary();
+
+      // Reflections
+      const todayRef = reflections[todayStr()]||{};
+      $('#win').value=todayRef.win||'';
+      $('#obstacle').value=todayRef.obstacle||'';
+      renderReflectionsList();
+
+      // Reminder banner
+      updateReminder();
+
+      // Render timer
+      renderTime();
     }
 
-    function updateSummary() {
-      let total = data.reduce((sum, d) => sum + d.hours, 0);
-      let avg = (total / data.length).toFixed(1);
-      document.getElementById("summary").innerText = `Total Hours: ${total}, Average per Task: ${avg}`;
-    }
-    updateSummary();
+    document.addEventListener('visibilitychange', ()=> {
+      // Pause timer if tab hidden to avoid drifting when throttled
+      if(document.hidden && timerInterval){ pauseTimer(); }
+    });
 
-    // Pomodoro Timer
-    let timer;
-    let timeLeft = 25 * 60;
-    function startTimer() {
-      clearInterval(timer);
-      timer = setInterval(() => {
-        if (timeLeft <= 0) { clearInterval(timer); alert("Break Time!"); return; }
-        timeLeft--;
-        let minutes = Math.floor(timeLeft / 60);
-        let seconds = timeLeft % 60;
-        document.getElementById("timer").innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-      }, 1000);
-    }
-    function resetTimer() {
-      clearInterval(timer);
-      timeLeft = 25 * 60;
-      document.getElementById("timer").innerText = "25:00";
-    }
+    window.addEventListener('load', init);
 
-    // Motivation Quotes
-    const quotes = [
-      "Small steps every day lead to big results.",
-      "Discipline beats motivation.",
-      "You only regret the work you didn’t do.",
-      "Focus on progress, not perfection."
-    ];
-    document.getElementById("quote").innerText = quotes[Math.floor(Math.random() * quotes.length)];
-
-    // Dark Mode
-    function toggleDarkMode() {
-      document.body.classList.toggle("dark-mode");
-    }
   </script>
 </body>
 </html>
